@@ -18,7 +18,9 @@ class ConfigurationOvermind:
         with open(CONFIG_FILE_PATH, "w") as configfile:
             parser.write(configfile)
 
-        print("CREATED CONFIG FILE")
+        """FIXME: Исправить потенциальную ошибку, когда при отсутсвии папки config бот ложиться"""
+
+        print("\n CREATED CONFIG FILE")
 
         return parser
 
@@ -26,7 +28,7 @@ class ConfigurationOvermind:
         parser: configparser.ConfigParser = configparser.ConfigParser()
         parser.read(CONFIG_FILE_PATH)
 
-        print("READED CONFIG FILE")
+        print("\n READED CONFIG FILE")
 
         return parser
 

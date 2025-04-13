@@ -1,10 +1,12 @@
 from typing import Any, Awaitable, Callable
+from abc import ABC, abstractmethod
+
 
 from telegram import Update
 from telegram.ext import CallbackContext, CommandHandler, ContextTypes
 
 
-class BaseBotCommand:
+class BaseBotCommand(ABC):
     def __init__(self, command: str) -> None:
         self.handler = CommandHandler(command, self._callback)
 

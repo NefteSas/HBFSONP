@@ -12,4 +12,5 @@ class TelegramBotInterface:
         self.app.add_handlers(handlers)
 
     def Run(self):
+        print('BOT STARTING')
         self.app.run_polling()
