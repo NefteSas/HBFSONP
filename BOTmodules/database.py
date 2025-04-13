@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 DATABASE_PATH = "database"
 
@@ -94,9 +95,22 @@ class MonumentsDatabase():
     def ReadMonumentByID(self, id) -> Monument:
         return self.ReadMonumentFile(f"{DATABASE_PATH}/{id}.monument")
 
+    def GetUniqueID(self) -> int:
+        list = self.__GetListOfFilesInDB()
+        maxid = 0
+        for file in list:
+            buffer = re.sub(pattern="\D",string=file,repl='')
+            maxid = max(maxid, int(buffer))
             
+        return maxid + 1
+        
+    def __GetListOfFilesInDB(self) -> list:
+        return os.listdir(DATABASE_PATH + "/")
+    
 if (__name__ == '__main__'):
+    
     DB = MonumentsDatabase()
+    print(DB.GetUniqueID())
     try:
         DB.CreateMonumentFile(Monument(1, "Z", _x = 0, _y = 0))
     except FileExistsError:
