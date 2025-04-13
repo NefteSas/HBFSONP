@@ -19,7 +19,7 @@ class Monument():
             raise ValueError("GIVE ARGS FOR MONUMENT CLASS")
         
     def __str__(self) -> str:
-        return f"--------- \n ID: {self.id} \n ---------"
+        return f"----ID: {self.id}----- \nNAME: {self.name} \nPOS: {self.position_stupid} \nGPS: {self.GPSPosition} \n"
 
     @property
     def getName(self):
@@ -88,24 +88,41 @@ class MonumentsDatabase():
     def ReadMonumentFile(self, path: str) -> Monument:
         if (os.path.exists(path)):
             with open(path, "r") as monumentFS:
-                return json.load(monumentFS, cls=MonumentDecoder)
+                return MonumentDecoder.from_dict(json.load(monumentFS))
         else:
             raise FileNotFoundError()
         
     def ReadMonumentByID(self, id) -> Monument:
         return self.ReadMonumentFile(f"{DATABASE_PATH}/{id}.monument")
 
+    def UpdateMonumentSaveByID(self, id: int, newMonumentum: Monument):
+        
+        if (os.path.exists(f"{DATABASE_PATH}/{newMonumentum.getID}.monument")):
+            with open(f"{DATABASE_PATH}/{newMonumentum.getID}.monument", 'w') as monumentFS:
+                json.dump(obj=newMonumentum, cls=MonumentsEncoder, fp=monumentFS)
+        else:
+            raise self.CreateMonumentFile(newMonumentum)
+
     def GetUniqueID(self) -> int:
-        list = self.__GetListOfFilesInDB()
         maxid = 0
-        for file in list:
-            buffer = re.sub(pattern="\D",string=file,repl='')
-            maxid = max(maxid, int(buffer))
+        
+        for id in self.GetIDS():
+            maxid = max(id, maxid)
             
         return maxid + 1
+    
+    def GetIDS(self) -> list[int]:
+        list = self.__GetListOfFilesInDB()
+        buffer = []
+        for file in list:
+            buffer.append(int(re.sub(pattern="\D",string=file,repl='')))
         
+        return buffer
+            
     def __GetListOfFilesInDB(self) -> list:
         return os.listdir(DATABASE_PATH + "/")
+    
+
     
 if (__name__ == '__main__'):
     
@@ -115,3 +132,5 @@ if (__name__ == '__main__'):
         DB.CreateMonumentFile(Monument(1, "Z", _x = 0, _y = 0))
     except FileExistsError:
         print(DB.ReadMonumentByID(1))
+        
+    #DB.UpdateMonumentSaveByID(1, Monument(1, "ZZ", _x = 0, _y = 0))
