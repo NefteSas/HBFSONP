@@ -8,3 +8,4 @@ class BaseCommandAssociation:
     @property
     def GetCommandsToLoad(self) -> list[BaseBotCommand]:
         return self.commands
+    

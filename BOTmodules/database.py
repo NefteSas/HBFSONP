@@ -5,16 +5,16 @@ import re
 DATABASE_PATH = "database"
 
 class Monument():
-    def __init__(self, _id: int, _name: str, _description: str = None, _position_stupid: str = None, _GPSPosition: tuple[float, float] = None, _x: float = None, _y: float = None):
+    def __init__(self, _id: int, _name: str, _description: str = None, _position_stupid: str = None, _GPSPosition: tuple[float, float] = None, _latitude: float = None, _longitude: float = None):
         self.id = _id
         self.name = _name
         self.description = _description
         self.position_stupid = _position_stupid
-        if (_GPSPosition is not None or (_x is not None and _y is not None)):
+        if (_GPSPosition is not None or (_latitude is not None and _longitude is not None)):
             if (_GPSPosition):
                 self.GPSPosition = _GPSPosition
             else:
-                self.GPSPosition = (_x, _y)
+                self.GPSPosition = (_latitude, _longitude)
         else:
             raise ValueError("GIVE ARGS FOR MONUMENT CLASS")
         
@@ -54,7 +54,7 @@ class MonumentsEncoder(json.JSONEncoder):
                 'GPSPOS': monumentObject.getGPSPosition
             }
         else:
-            raise TypeError(f"WANTED MONUMENT TYPE. GETTED {type(o)}")
+            raise TypeError(f"WANTED MONUMENT TYPE. GETTED {type(monumentObject)}")
         
 class MonumentDecoder(json.JSONDecoder):
     @staticmethod
@@ -125,7 +125,6 @@ class MonumentsDatabase():
 
     
 if (__name__ == '__main__'):
-    
     DB = MonumentsDatabase()
     print(DB.GetUniqueID())
     try:

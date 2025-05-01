@@ -13,7 +13,7 @@ class ConfigurationOvermind:
     def _create_configuration_file(self) -> configparser.ConfigParser:
         parser: configparser.ConfigParser = configparser.ConfigParser()
 
-        parser["FUNDAMENTAL"] = {"TOKEN": ""}
+        parser["FUNDAMENTAL"] = {"TOKEN": "", "DEVS": ""}
 
         with open(CONFIG_FILE_PATH, "w") as configfile:
             parser.write(configfile)
@@ -37,6 +37,9 @@ class ConfigurationOvermind:
             return self._read_configuration_file()
         else:
             return self._create_configuration_file()
+
+    def getBotDevs(self) -> list:
+        return self.parser["FUNDAMENTAL"]["DEVS"].split(',')
 
     def getBotToken(self) -> str:
         token: str = self.parser["FUNDAMENTAL"]["TOKEN"]

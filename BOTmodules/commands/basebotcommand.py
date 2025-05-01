@@ -7,13 +7,16 @@ from telegram.ext import CallbackContext, CommandHandler, ContextTypes
 
 
 class BaseBotCommand(ABC):
-    def __init__(self, command: str) -> None:
-        self.handler = CommandHandler(command, self._callback)
+    def __init__(self, command: str, args=None) -> None:
+        self.textCommand = command
+        self.handler = CommandHandler(command, self._callback, has_args=args)
 
-    @staticmethod
-    async def _callback(update: Update, callback: ContextTypes.DEFAULT_TYPE):
+    async def _callback(self, update: Update, callback: ContextTypes.DEFAULT_TYPE):
         pass
 
     @property
+    def commandID(self) -> str:
+        return self.textCommand
+
     def GetHandler(self):
         return self.handler

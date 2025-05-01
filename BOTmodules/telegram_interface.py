@@ -8,6 +8,9 @@ class TelegramBotInterface:
     def AddHandlerToList(self, handler: BaseHandler):
         self.app.add_handler(handler)
 
+    def getApplication(self) -> Application:
+        return self.app
+
     def AddHandlers(self, handlers: list[BaseHandler]):
         self.app.add_handlers(handlers)
 
