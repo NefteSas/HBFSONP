@@ -5,11 +5,19 @@ import re
 DATABASE_PATH = "database"
 
 class Monument():
-    def __init__(self, _id: int, _name: str, _description: str = None, _position_stupid: str = None, _GPSPosition: tuple[float, float] = None, _latitude: float = None, _longitude: float = None):
+    def __init__(self, _id: int
+                 , _name: str
+                 , _description: str = None
+                 , _position_stupid: str = None
+                 , _GPSPosition: tuple[float, float] = None
+                 , _latitude: float = None
+                 , _longitude: float = None,
+                 _url: str = None):
         self.id = _id
         self.name = _name
         self.description = _description
         self.position_stupid = _position_stupid
+        self.url = _url
         if (_GPSPosition is not None or (_latitude is not None and _longitude is not None)):
             if (_GPSPosition):
                 self.GPSPosition = _GPSPosition
@@ -41,6 +49,10 @@ class Monument():
     def getGPSPosition(self) -> tuple[float, float]:
         return self.GPSPosition
     
+    @property
+    def getURL(self) -> str:
+        return self.url
+    
 class MonumentsEncoder(json.JSONEncoder):
     @staticmethod
     def default(monumentObject: Monument):
@@ -51,7 +63,8 @@ class MonumentsEncoder(json.JSONEncoder):
                 'NAME': monumentObject.getName,
                 'DESCRIPTION': monumentObject.getDescription,
                 'POSSTUPID': monumentObject.getStupidPosition,
-                'GPSPOS': monumentObject.getGPSPosition
+                'GPSPOS': monumentObject.getGPSPosition,
+                'URL': monumentObject.getURL
             }
         else:
             raise TypeError(f"WANTED MONUMENT TYPE. GETTED {type(monumentObject)}")
@@ -65,7 +78,8 @@ class MonumentDecoder(json.JSONDecoder):
                 _name = monumentJSON['NAME'],
                 _description = monumentJSON['DESCRIPTION'],
                 _position_stupid = monumentJSON['POSSTUPID'],
-                _GPSPosition = monumentJSON['GPSPOS']
+                _GPSPosition = monumentJSON['GPSPOS'],
+                _url = monumentJSON['URL']
             )
         else:
             raise json.JSONDecodeError('FAILED')

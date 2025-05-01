@@ -1,7 +1,7 @@
 from typing import override
 
 from datetime import datetime
-from telegram import Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 from BOTmodules import database
@@ -64,7 +64,17 @@ class MonumentInfoCommand(BaseBotCommand):
             await update.message.reply_text(
             "⚠️ Памятника с таким идентефикатором не существует")
 
+        keyboard = [
+        ]
+        if (monument.getURL):
+            keyboard.append([InlineKeyboardButton("Подробнее", url=monument.getURL)])
+            
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
         await update.message.reply_text(
             f"""
-            📇: {monument.name}\n\n🔎: {monument.position_stupid}\n\nℹ️: {monument.description}
-            """)
+            📇: {monument.name}\n\n🔎: {monument.position_stupid}\n\nℹ️: {monument.description},
+            """,
+            reply_markup=reply_markup)
+        
+        await update.message.reply_location(monument.getGPSPosition[0], monument.getGPSPosition[1])
