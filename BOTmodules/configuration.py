@@ -14,7 +14,7 @@ class ConfigurationOvermind:
         parser: configparser.ConfigParser = configparser.ConfigParser()
 
         parser["FUNDAMENTAL"] = {"TOKEN": "", "DEVS": ""}
-
+        
         with open(CONFIG_FILE_PATH, "w") as configfile:
             parser.write(configfile)
 
