@@ -13,7 +13,7 @@ from BOTmodules.commands import *
 from BOTmodules.commands.basedevcommand import BaseDevCommand
 from BOTmodules.commands.monumentscommands import CancelDialogCommand
 
-DESCRITPTION,GETSTUPIDPOIS,ASKPOS,GETGPSPOS,CONFIRM = 1,2,3,4,5
+DESCRITPTION,GETSTUPIDPOIS,ASKPOS,GETGPSPOS,URL,CONFIRM = 1,2,3,4,5,6
 
 class RegMonumentCommand(BaseDevCommand):
     def __init__(self, command, has_args=True):
@@ -32,6 +32,7 @@ class RegMonumentConverstation():
         states={
             DESCRITPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.__getMonumentDescription)],
             GETSTUPIDPOIS: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.__getMonumentLocation)],
+            URL: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.__getURL)],
             ASKPOS: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.__AskMonumentGeoLocation)],
             GETGPSPOS: [MessageHandler(filters.LOCATION | filters.TEXT, self.__GetMonumentGeoLocation)],
             CONFIRM: [MessageHandler(filters.LOCATION | filters.TEXT & ~filters.COMMAND, self.__confrimData)]
@@ -48,6 +49,11 @@ class RegMonumentConverstation():
 
     async def __getMonumentLocation(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["description"] = update.message.text
+        await update.message.reply_text("Теперь URL адрес")
+        return URL
+    
+    async def __getURL(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        context.user_data["URL"] = update.message.text
         await update.message.reply_text("Теперь адрес")
         return ASKPOS
     
@@ -66,9 +72,14 @@ class RegMonumentConverstation():
             context.user_data["longitude"] = location.longitude
         else:
             location = update.message.text.split(" ")
+            if (len(location) != 2):
+                await update.message.reply_text("⚠️ Ошибка форматирования геопозиции. Повторите попыку. Например: 5 5. __ЧЕРЕЗ ПРОБЕЛ__")
+                return GETGPSPOS
+            
             context.user_data["latitude"] = location[0]
             context.user_data["longitude"] = location[1]
 
+        
         
         # Создаем клавиатуру для подтверждения
         reply_keyboard = [["Да", "Нет"]]
@@ -77,8 +88,9 @@ class RegMonumentConverstation():
             "Подтверждаете данные?\n"
             f"Название: {context.user_data['name']}\n"
             f"Описание: {context.user_data['description']}\n"
+            f"URL: {context.user_data['URL']}\n"
             f"Адрес: {context.user_data['address']}\n"
-            f"Координаты: {context.user_data["latitude"]}, {context.user_data["longitude"]}",
+            f"Координаты: Широта: {context.user_data["latitude"]}, Долгота: {context.user_data["longitude"]}",
             reply_markup=ReplyKeyboardMarkup(
                 reply_keyboard, 
                 one_time_keyboard=True,

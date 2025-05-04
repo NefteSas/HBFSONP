@@ -27,7 +27,7 @@ db = database.MonumentsDatabase()
 
 class MonumentListCommand(BaseBotCommand):
 
-    IN_LIST = 10
+    IN_LIST = 5
 
     def __init__(self) -> None:
         super().__init__("monums")
@@ -49,36 +49,54 @@ class MonumentListCommand(BaseBotCommand):
             else:
                 await query.answer("Начало списка")
                 return
+        
+        splitted = query.data.split(':')
+        if (len(splitted)==2):
+            newContext = context
+            newContext.args = [splitted[1]] 
+            print(splitted[1])
+            await MonumentInfoCommand()._callback(update=update, context=newContext)
+            return
+        
+        v = self.__renderList(context.user_data["listPage"])        
                 
         keyboard = [
             [InlineKeyboardButton("⬅️", callback_data="-1"),
-            InlineKeyboardButton("➡️", callback_data="1")]
+            InlineKeyboardButton("➡️", callback_data="1")],
+            v[1]
         ]        
         
-        await query.edit_message_text(self.__renderList(context.user_data["listPage"]), reply_markup=InlineKeyboardMarkup(keyboard))
+        await query.edit_message_text(v[0], reply_markup=InlineKeyboardMarkup(keyboard))
         
-                
-        
-             
-
-    def __renderList(self, iters: int):
+    def __renderList(self, iters: int) -> tuple[str, list]:
         ids = db.GetIDS()
 
-        string = f"СТРАНИЦА {iters+1} / {math.ceil(len(db.GetIDS())/MonumentListCommand.IN_LIST) + 1} \n\n"
+        keyboard = []
         
-        for i in ids[MonumentListCommand.IN_LIST * iters:]:
+        string = f"СТРАНИЦА {iters+1} / {math.ceil(len(db.GetIDS())/MonumentListCommand.IN_LIST)} \n\n"
+        
+        for i in ids[((MonumentListCommand.IN_LIST * iters)):]:
             if (i<=MonumentListCommand.IN_LIST + MonumentListCommand.IN_LIST * iters):
                 pass
             else:
                 break
             print(i)
             monument: database.Monument = db.ReadMonumentByID(i)
-            string += f"{INT_TO_SMILICK[i-1]}: {monument.name} \n\n"
+            
+            k = (i - MonumentListCommand.IN_LIST * iters)-1
+            
+            string += f"{INT_TO_SMILICK[k]}: {monument.name} \n\n"
+            keyboard.append(InlineKeyboardButton(f"{INT_TO_SMILICK[k]}", callback_data=f"ID:{i}"))
+        
         
         if (string == ""):
             string = "Увы, никаких памятников пока не добавлено 😔"
+        else:
+            string+= "Нажми на кнопки ниже, чтобы подробнее узнать о памятниках 😉"
+            
+        
 
-        return string
+        return (string, keyboard)
 
     @override
     async def _callback(self, update: Update, callback: ContextTypes.DEFAULT_TYPE):
@@ -88,12 +106,16 @@ class MonumentListCommand(BaseBotCommand):
         except KeyError:
             callback.user_data["listPage"] = 0
 
-        string = self.__renderList(0)
+        renderetTuple = self.__renderList(0)
+        string = renderetTuple[0]
 
         keyboard = [
             [InlineKeyboardButton("⬅️", callback_data="-1"),
-            InlineKeyboardButton("➡️", callback_data="1")]
+            InlineKeyboardButton("➡️", callback_data="1")],
+            renderetTuple[1]
         ]
+        
+        
 
 
 
@@ -130,14 +152,17 @@ class MonumentInfoCommand(BaseBotCommand):
             keyboard.append([InlineKeyboardButton("Подробнее", url=monument.getURL)])
             
         reply_markup = InlineKeyboardMarkup(keyboard)
-
-        await update.message.reply_text(
+        
+        message = update.message if update.message is not None else update.callback_query.message
+        
+        await message.reply_text(
             f"""
             📇: {monument.name}\n\n🔎: {monument.position_stupid}\n\nℹ️: {monument.description},
             """,
             reply_markup=reply_markup)
         
-        await update.message.reply_location(monument.getGPSPosition[0], monument.getGPSPosition[1])
+        await message.reply_location(monument.getGPSPosition[0], monument.getGPSPosition[1])
+        
 
 NAME = 1
 

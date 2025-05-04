@@ -3,6 +3,7 @@ import datetime
 from BOTmodules import *
 from BOTmodules.commands.infocommand import InfoCommand
 from BOTmodules.commands.monumentscommands import *
+from BOTmodules.commands.unknowncommandhandler import UnknownCommandHandler
 from BOTmodules.configuration import ConfigurationOvermind
 from BOTmodules.telegram_interface import TelegramBotInterface
 
@@ -14,4 +15,5 @@ TGI.AddHandlerToList(RegMonumentConverstation().getHandler())
 TGI.AddHandlerToList(MonumentInfoCommand().GetHandler())
 TGI.AddHandlers(EditMonumentInfo().GetHandler())
 TGI.AddHandlerToList(RandomMonument().GetHandler())
+TGI.AddHandlerToList(UnknownCommandHandler().GetHandler())
 TGI.Run()
