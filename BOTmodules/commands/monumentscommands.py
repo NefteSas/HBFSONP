@@ -1,3 +1,4 @@
+import re
 from typing import override
 
 from datetime import datetime
@@ -93,40 +94,28 @@ class CancelDialogCommand(BaseBotCommand):
         return ConversationHandler.END
 
 class EditMonumentInfo(BaseDevCommand):
-    def __init__(self, command="EM", has_args=True):
-        super().__init__(command, has_args)
-        self.callbackQueryHandler = CallbackQueryHandler(self.button)
-        self.handler = CommandHandler(command=command,callback=self._callback)
-        self.converstationHandler = ConversationHandler(entry_points=[self.callbackQueryHandler
-            ],states={
-                NAME: [CallbackQueryHandler(self.__getName)]
-            },fallbacks=[CallbackQueryHandler(CancelDialogCommand()._callback)], per_message=True
-        )
-        
-        
-    async def __getName(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        await update.message.reply_text("Z")
-        
-    async def button(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-        """Parses the CallbackQuery and updates the message text."""
-        query = update.callback_query
-        
-        # CallbackQueries need to be answered, even if no notification to the user is needed
-        # Some clients may have trouble otherwise. See https://core.telegram.org/bots/api#callbackquery
-        await query.answer("")
-        
-        if (query.data == "1"):
-            print(query.data)
-        return NAME
-        
+    START, NAME, DESCRITPTION = range(3)
 
-            
-    async def _callback(self, update, callback):
-        await super()._callback(update, callback)
-        
-        args = callback.args 
+    def __init__(self, command="EM", has_args=True):
+        self.conv_handler = ConversationHandler(
+        entry_points=[
+            CallbackQueryHandler(callback=self._startEditing, pattern=r"monument:\d:\d")
+        ],
+        states={
+            EditMonumentInfo.NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, self._get_name)],
+            EditMonumentInfo.DESCRITPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, self._get_desc)]
+        },
+        fallbacks=[CancelDialogCommand().GetHandler()]
+    )
+        self.comm_handler = CommandHandler("EM", self.__command_callback)
+        super().__init__(command, has_args)
+
+    async def __command_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await super()._callback(update, context)
+
+        args = context.args 
         monument = None
-        if (not callback.args):
+        if (not context.args):
             await update.message.reply_text(
             "⚠️ Укажите идентефикатор памятника")
             return
@@ -136,20 +125,53 @@ class EditMonumentInfo(BaseDevCommand):
             await update.message.reply_text(
             "⚠️ Памятника с таким идентефикатором не существует")
             return
-        
+
+        # Создаем кнопку для запуска диалога
         keyboard = [
-        [
-            InlineKeyboardButton("Название", callback_data="1"),
-            InlineKeyboardButton("Описание", callback_data="2"),
-            InlineKeyboardButton("Адресс", callback_data="3"),
-            InlineKeyboardButton("Геолокацию", callback_data="4")
-        ],
+            [InlineKeyboardButton("Имя", callback_data=f"monument:{args[0]}:1")],
+            [InlineKeyboardButton("Описание", callback_data=f"monument:{args[0]}:2")],
+            [InlineKeyboardButton("Геолокацию", callback_data=f"monument:{args[0]}:3")],
+            [InlineKeyboardButton("Адресс", callback_data=f"monument:{args[0]}:4")]
         ]
-
         reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await update.message.reply_text(
+            "Нажмите кнопку, чтобы начать изменение определенного параметра",
+            reply_markup=reply_markup
+        )
 
-        await update.message.reply_text("Че изменить?", reply_markup=reply_markup)
+    # Обработчик нажатия кнопки
+    async def _startEditing(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        query = update.callback_query
+        await query.answer()
+        query_data = query.data.split(':')
+        print(query_data[2]=="1")
+        context.user_data["ID"] = query_data[1]
+        if (query_data[2]=="1"):
+            await query.edit_message_text("Введите новое имя памятника:")
+            return EditMonumentInfo.NAME
+        elif (query_data[2]=="2"):
+            await query.edit_message_text("Введите новое описание памятника:")
+            return EditMonumentInfo.DESCRITPTION
+        
+    async def _get_name(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        try:
+            database.MonumentsDatabase().UpdateMonumentSaveByID(context.user_data["ID"], name=update.message.text)
+        except FileExistsError:
+            await update.message.reply_text("❌ обновление не удалось")
+        await update.message.reply_text("✅ данные обновлены")
+        await self._endConv(update, context)
+
+
+
+    async def _get_desc(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        try:
+            database.MonumentsDatabase().UpdateMonumentSaveByID(context.user_data["ID"], desc=update.message.text)
+        except FileExistsError:
+            await update.message.reply_text("❌ обновление не удалось")
+        await update.message.reply_text("✅ данные обновлены")
+        await self._endConv(update, context)
     
     @override
     def GetHandler(self):
-        return [self.handler, self.converstationHandler, self.callbackQueryHandler]
+        return [self.conv_handler, self.comm_handler]

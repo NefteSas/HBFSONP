@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 
 
 from telegram import Update
-from telegram.ext import CallbackContext, CommandHandler, ContextTypes
+from telegram.ext import CallbackContext, CommandHandler, ContextTypes, ConversationHandler
 
 
 class BaseBotCommand(ABC):
@@ -13,6 +13,10 @@ class BaseBotCommand(ABC):
 
     async def _callback(self, update: Update, callback: ContextTypes.DEFAULT_TYPE):
         pass
+
+    async def _endConv(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        context.user_data.clear()
+        return ConversationHandler.END
 
     @property
     def commandID(self) -> str:

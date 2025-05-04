@@ -117,6 +117,20 @@ class MonumentsDatabase():
         else:
             raise self.CreateMonumentFile(newMonumentum)
 
+    def UpdateMonumentSaveByID(self, id: int, name: str=None, desc: str=None, _stupid_pos: str=None, gpsPos: tuple[float, float]=None):
+        
+        oldMonument = self.ReadMonumentByID(id=id)
+        newMonument = oldMonument
+        if (name or desc or _stupid_pos or gpsPos):
+            return
+
+        newMonument= Monument(oldMonument.getID, name if name is not None else oldMonument.description,
+        desc if desc is not None else oldMonument.description,
+        _stupid_pos if _stupid_pos is not None else oldMonument.position_stupid,
+        gpsPos if gpsPos is not None else oldMonument.GPSPosition,_url=oldMonument.getURL)
+
+        self.UpdateMonumentSaveByID(newMonument.getID, newMonument)
+
     def GetUniqueID(self) -> int:
         maxid = 0
         
@@ -141,9 +155,6 @@ class MonumentsDatabase():
 if (__name__ == '__main__'):
     DB = MonumentsDatabase()
     print(DB.GetUniqueID())
-    try:
-        DB.CreateMonumentFile(Monument(1, "Z", _x = 0, _y = 0))
-    except FileExistsError:
-        print(DB.ReadMonumentByID(1))
+
         
-    #DB.UpdateMonumentSaveByID(1, Monument(1, "ZZ", _x = 0, _y = 0))
+    DB.UpdateMonumentSaveByID(1, Monument(1, "ZZ", _latitude = 0, _longitude = 0))
