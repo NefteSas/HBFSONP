@@ -18,5 +18,5 @@ class BaseDevCommand(BaseBotCommand):
             pass
         else:
             await update.message.reply_text("🛑 ВАМ НЕ ДОСТУПНА ДАННАЯ КОМАНДА. ОБРАТИТЕСЬ К СОЗДАТЕЛЮ.")
-            raise Exception("PERMISSIONS NOT ENOUGHT")
+            raise PermissionError
         

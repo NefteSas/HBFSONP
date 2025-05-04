@@ -10,13 +10,25 @@ from telegram.ext import (
 
 from BOTmodules import database
 from BOTmodules.commands import *
+from BOTmodules.commands.basedevcommand import BaseDevCommand
+from BOTmodules.commands.monumentscommands import CancelDialogCommand
 
 DESCRITPTION,GETSTUPIDPOIS,ASKPOS,GETGPSPOS,CONFIRM = 1,2,3,4,5
+
+class RegMonumentCommand(BaseDevCommand):
+    def __init__(self, command, has_args=True):
+        super().__init__("RM", None)
+        
+    async def _callback(self, update, callback):
+        await super()._callback(update, callback)
+        await update.message.reply_text("Название памятника пожалуйста")
+        return DESCRITPTION
+        
 
 class RegMonumentConverstation():
     def __init__(self):
         self.conv_handler: ConversationHandler = ConversationHandler(
-        entry_points=[CommandHandler("RM", self.__startRMREG)],  # Господь, прости меня за это
+        entry_points=[RegMonumentCommand("RM", None).GetHandler()],  # Господь, прости меня за это
         states={
             DESCRITPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.__getMonumentDescription)],
             GETSTUPIDPOIS: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.__getMonumentLocation)],
@@ -24,12 +36,10 @@ class RegMonumentConverstation():
             GETGPSPOS: [MessageHandler(filters.LOCATION | filters.TEXT, self.__GetMonumentGeoLocation)],
             CONFIRM: [MessageHandler(filters.LOCATION | filters.TEXT & ~filters.COMMAND, self.__confrimData)]
         },
-        fallbacks=[CommandHandler("cancel", self.__cancel_dialog)],  # Отмена
+        fallbacks=[CancelDialogCommand().GetHandler()],  # Отмена
     )
         
-    async def __startRMREG(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        await update.message.reply_text("Название памятника пожалуйста")
-        return DESCRITPTION
+    
     
     async def __getMonumentDescription(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["name"] = update.message.text
