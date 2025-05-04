@@ -9,8 +9,9 @@ from BOTmodules.telegram_interface import TelegramBotInterface
 from BOTmodules.commands.regmonumentconverstation import *
 TGI = TelegramBotInterface(ConfigurationOvermind().getBotToken())
 TGI.AddHandlerToList(InfoCommand().GetHandler())
-TGI.AddHandlerToList(MonumentListCommand().GetHandler())
+TGI.AddHandlers(MonumentListCommand().GetHandler())
 TGI.AddHandlerToList(RegMonumentConverstation().getHandler())
 TGI.AddHandlerToList(MonumentInfoCommand().GetHandler())
 TGI.AddHandlers(EditMonumentInfo().GetHandler())
+TGI.AddHandlerToList(RandomMonument().GetHandler())
 TGI.Run()

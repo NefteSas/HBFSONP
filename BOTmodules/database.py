@@ -109,27 +109,22 @@ class MonumentsDatabase():
     def ReadMonumentByID(self, id) -> Monument:
         return self.ReadMonumentFile(f"{DATABASE_PATH}/{id}.monument")
 
-    def UpdateMonumentSaveByID(self, id: int, newMonumentum: Monument):
+    def UpdateMonumentSaveByIDByClass(self, id: int, newMonumentum: Monument):
         
         if (os.path.exists(f"{DATABASE_PATH}/{newMonumentum.getID}.monument")):
             with open(f"{DATABASE_PATH}/{newMonumentum.getID}.monument", 'w') as monumentFS:
                 json.dump(obj=newMonumentum, cls=MonumentsEncoder, fp=monumentFS)
         else:
-            raise self.CreateMonumentFile(newMonumentum)
+            self.CreateMonumentFile(newMonumentum)
 
     def UpdateMonumentSaveByID(self, id: int, name: str=None, desc: str=None, _stupid_pos: str=None, gpsPos: tuple[float, float]=None):
-        
         oldMonument = self.ReadMonumentByID(id=id)
-        newMonument = oldMonument
-        if (name or desc or _stupid_pos or gpsPos):
-            return
-
-        newMonument= Monument(oldMonument.getID, name if name is not None else oldMonument.description,
+        newMonument = Monument(id, name if name is not None else oldMonument.description,
         desc if desc is not None else oldMonument.description,
         _stupid_pos if _stupid_pos is not None else oldMonument.position_stupid,
-        gpsPos if gpsPos is not None else oldMonument.GPSPosition,_url=oldMonument.getURL)
-
-        self.UpdateMonumentSaveByID(newMonument.getID, newMonument)
+        gpsPos if gpsPos is not None else oldMonument.GPSPosition,
+        _url=oldMonument.getURL)
+        self.UpdateMonumentSaveByIDByClass(id=id, newMonumentum=newMonument)
 
     def GetUniqueID(self) -> int:
         maxid = 0
@@ -157,4 +152,4 @@ if (__name__ == '__main__'):
     print(DB.GetUniqueID())
 
         
-    DB.UpdateMonumentSaveByID(1, Monument(1, "ZZ", _latitude = 0, _longitude = 0))
+    DB.UpdateMonumentSaveByID(1, name="AG")

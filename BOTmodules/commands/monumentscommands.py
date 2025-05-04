@@ -1,13 +1,17 @@
+import math
+import queue
+import random
 import re
 from typing import override
 
 from datetime import datetime
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 from telegram.ext import ContextTypes, CallbackQueryHandler, ConversationHandler, CommandHandler, MessageHandler, filters
 
 from BOTmodules import database
 from BOTmodules.commands.basebotcommand import BaseBotCommand
 from BOTmodules.commands.basedevcommand import BaseDevCommand
+from BOTmodules.commands.infocommand import InfoCommand
 
 INT_TO_SMILICK = ['1️⃣',
 '2️⃣',
@@ -22,31 +26,85 @@ INT_TO_SMILICK = ['1️⃣',
 db = database.MonumentsDatabase()
 
 class MonumentListCommand(BaseBotCommand):
+
+    IN_LIST = 10
+
     def __init__(self) -> None:
         super().__init__("monums")
+        self.markuphandler = CallbackQueryHandler(self._queryCallback)
 
-    @override
-    async def _callback(self, update: Update, callback: ContextTypes.DEFAULT_TYPE):
-
-        string = ""
-
+    async def _queryCallback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        query = update.callback_query
         
+        if (query.data=="1"):
+            if (context.user_data["listPage"] + 1 < math.ceil(len(db.GetIDS()) / MonumentListCommand.IN_LIST)):
+                context.user_data["listPage"] += 1
+            else:
+                await query.answer("Конец списка")
+                return
+            
+        elif (query.data == "-1"):
+            if (context.user_data["listPage"]>0):
+                context.user_data["listPage"]-=1
+            else:
+                await query.answer("Начало списка")
+                return
+                
+        keyboard = [
+            [InlineKeyboardButton("⬅️", callback_data="-1"),
+            InlineKeyboardButton("➡️", callback_data="1")]
+        ]        
+        
+        await query.edit_message_text(self.__renderList(context.user_data["listPage"]), reply_markup=InlineKeyboardMarkup(keyboard))
+        
+                
+        
+             
+
+    def __renderList(self, iters: int):
         ids = db.GetIDS()
 
-        for i in ids:
-            if (i<=10):
+        string = f"СТРАНИЦА {iters+1} / {math.ceil(len(db.GetIDS())/MonumentListCommand.IN_LIST) + 1} \n\n"
+        
+        for i in ids[MonumentListCommand.IN_LIST * iters:]:
+            if (i<=MonumentListCommand.IN_LIST + MonumentListCommand.IN_LIST * iters):
                 pass
             else:
                 break
             print(i)
             monument: database.Monument = db.ReadMonumentByID(i)
-            string += f"{INT_TO_SMILICK[i-1]}: {monument.name} \n"
+            string += f"{INT_TO_SMILICK[i-1]}: {monument.name} \n\n"
         
         if (string == ""):
             string = "Увы, никаких памятников пока не добавлено 😔"
 
+        return string
+
+    @override
+    async def _callback(self, update: Update, callback: ContextTypes.DEFAULT_TYPE):
+        callback.user_data.clear()
+        try:
+            callback.user_data["listPage"] = callback.user_data["listPage"] if callback.user_data["listPage"] is not None else 0
+        except KeyError:
+            callback.user_data["listPage"] = 0
+
+        string = self.__renderList(0)
+
+        keyboard = [
+            [InlineKeyboardButton("⬅️", callback_data="-1"),
+            InlineKeyboardButton("➡️", callback_data="1")]
+        ]
+
+
+
         await update.message.reply_text(
-            string)
+            string,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+    
+    @override
+    def GetHandler(self):
+        return [self.handler, self.markuphandler]
         
 class MonumentInfoCommand(BaseBotCommand):
     def __init__(self) -> None:
@@ -160,9 +218,7 @@ class EditMonumentInfo(BaseDevCommand):
         except FileExistsError:
             await update.message.reply_text("❌ обновление не удалось")
         await update.message.reply_text("✅ данные обновлены")
-        await self._endConv(update, context)
-
-
+        return await self._endConv(update, context)
 
     async def _get_desc(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
@@ -170,8 +226,20 @@ class EditMonumentInfo(BaseDevCommand):
         except FileExistsError:
             await update.message.reply_text("❌ обновление не удалось")
         await update.message.reply_text("✅ данные обновлены")
-        await self._endConv(update, context)
+        return await self._endConv(update, context)
     
     @override
     def GetHandler(self):
         return [self.conv_handler, self.comm_handler]
+    
+class RandomMonument(BaseBotCommand):
+    def __init__(self, command="rand", args=None):
+        super().__init__(command, args)
+        
+    async def _callback(self, update, callback):
+        ids = db.GetIDS()
+        callbackG = callback
+        callbackG.args = [random.randint(0, len(db.GetIDS()))]
+        await MonumentInfoCommand()._callback(update, callbackG)
+        
+        
