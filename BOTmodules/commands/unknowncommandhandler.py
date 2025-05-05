@@ -9,7 +9,7 @@ class UnknownCommandHandler(BaseMessageHandler):
         super().__init__(filters.COMMAND)
         
     async def _callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        super()._callback(update, context)
+        await super()._callback(update, context)
         await update.message.reply_text(
         f"❌ Неизвестная команда: `{update.message.text}`\n"
         "Используйте меню (рядом с скрепочкой) для списка команд.",

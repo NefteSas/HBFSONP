@@ -38,9 +38,7 @@ class RegMonumentConverstation():
             CONFIRM: [MessageHandler(filters.LOCATION | filters.TEXT & ~filters.COMMAND, self.__confrimData)]
         },
         fallbacks=[CancelDialogCommand().GetHandler()],  # Отмена
-    )
-        
-    
+    ) 
     
     async def __getMonumentDescription(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["name"] = update.message.text
@@ -103,7 +101,7 @@ class RegMonumentConverstation():
         answer = update.message.text
         if answer == "Да":
             DB = database.MonumentsDatabase()
-            DB.CreateMonumentFile(database.Monument(DB.GetUniqueID(), _name=context.user_data['name'], _description=context.user_data['description'], _position_stupid=context.user_data['address'],_GPSPosition=(context.user_data["latitude"], context.user_data["longitude"])))
+            DB.CreateMonumentFile(database.Monument(DB.GetUniqueID(), _name=context.user_data['name'], _description=context.user_data['description'], _position_stupid=context.user_data['address'],_GPSPosition=(context.user_data["latitude"], context.user_data["longitude"]), _url = context.user_data["URL"]))
 
             await update.message.reply_text(
                 "✅ Данные сохранены!",
