@@ -305,14 +305,15 @@ class MonumentsByLocation(BaseBotCommand):
             list_by_distance = self.__getNearestList(update.message.location)
                 
             string = "🔎Список памятников по расстоянию \n\n"
-            keyboard = []
+            keyboard = [[]]
             k=0
             for i in list_by_distance.keys():
                 k+=1
-                
+                if (k>5):
+                    break
                 monument = db.ReadMonumentByID(i)
                 string += f"{INT_TO_SMILICK[k-1]} | {monument.name} | {math.floor(list_by_distance[i])}м \n\n"
-                keyboard.append([InlineKeyboardButton(f"{INT_TO_SMILICK[i-1]}", callback_data=f"LOCATE:{i}")])             
+                keyboard[0].append(InlineKeyboardButton(f"{INT_TO_SMILICK[k-1]}", callback_data=f"LOCATE:{i}"))             
             print(keyboard)
             await update.message.reply_text(string, reply_markup=InlineKeyboardMarkup(keyboard))
             context.user_data.clear()
@@ -321,7 +322,7 @@ class MonumentsByLocation(BaseBotCommand):
 
          
     def __getNearestList(self, location: telegram.Location) -> dict[int: float]:
-        ids = db.GetIDS()
+        ids = sorted(db.GetIDS())
         id_distance = {}
         for id in ids:
             id_distance[id] = self.__calculateDistance(location, db.ReadMonumentByID(id=id))
