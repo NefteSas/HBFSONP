@@ -40,7 +40,7 @@ class MonumentListCommand(BaseBotCommand):
 
     async def _queryCallback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
-        
+        context.user_data["listPage"] = context.user_data["listPage"] if "listPage" in context.user_data.keys() else 0
         if (query.data=="MONUMS:1"):
             if (context.user_data["listPage"] + 1 < math.ceil(len(db.GetIDS()) / MonumentListCommand.IN_LIST)):
                 context.user_data["listPage"] += 1
@@ -73,21 +73,21 @@ class MonumentListCommand(BaseBotCommand):
         ]        
         await query.answer()
         await query.edit_message_text(v[0], reply_markup=InlineKeyboardMarkup(keyboard))
-        context.user_data.clear()
+        
         
     def __renderList(self, iters: int) -> tuple[str, list]:
-        ids = db.GetIDS()
+        ids = sorted(db.GetIDS())
+
 
         keyboard = []
-        
+        #print(math.ceil(len(db.GetIDS())/MonumentListCommand.IN_LIST))
         string = f"СТРАНИЦА {iters+1} / {math.ceil(len(db.GetIDS())/MonumentListCommand.IN_LIST)} \n\n"
-        
+
         for i in ids[((MonumentListCommand.IN_LIST * iters)):]:
             if (i<=MonumentListCommand.IN_LIST + MonumentListCommand.IN_LIST * iters):
                 pass
             else:
                 break
-            print(i)
             monument: database.Monument = db.ReadMonumentByID(i)
             
             k = (i - MonumentListCommand.IN_LIST * iters)-1
@@ -121,11 +121,6 @@ class MonumentListCommand(BaseBotCommand):
             InlineKeyboardButton("➡️", callback_data="MONUMS:1")],
             renderetTuple[1]
         ]
-        
-        
-
-
-
         await update.message.reply_text(
             string,
             reply_markup=InlineKeyboardMarkup(keyboard)
