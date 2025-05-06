@@ -3,6 +3,7 @@ import os
 
 CONFIG_FILE_PATH: str = "config/configuration.ini"
 
+DEV_MODE = True
 
 class ConfigurationOvermind:
     parser = configparser.ConfigParser()

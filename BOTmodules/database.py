@@ -12,12 +12,14 @@ class Monument():
                  , _GPSPosition: tuple[float, float] = None
                  , _latitude: float = None
                  , _longitude: float = None,
-                 _url: str = None):
+                 _url: str = None,
+                 _img: str = None):
         self.id = _id
         self.name = _name
         self.description = _description
         self.position_stupid = _position_stupid
         self.url = _url
+        self.img = _img
         if (_GPSPosition is not None or (_latitude is not None and _longitude is not None)):
             if (_GPSPosition):
                 self.GPSPosition = _GPSPosition
@@ -53,6 +55,10 @@ class Monument():
     def getURL(self) -> str:
         return self.url
     
+    @property
+    def getIMG(self) -> str:
+        return self.img
+    
 class MonumentsEncoder(json.JSONEncoder):
     @staticmethod
     def default(monumentObject: Monument):
@@ -64,7 +70,8 @@ class MonumentsEncoder(json.JSONEncoder):
                 'DESCRIPTION': monumentObject.getDescription,
                 'POSSTUPID': monumentObject.getStupidPosition,
                 'GPSPOS': monumentObject.getGPSPosition,
-                'URL': monumentObject.getURL
+                'URL': monumentObject.getURL,
+                'IMG': monumentObject.getIMG
             }
         else:
             raise TypeError(f"WANTED MONUMENT TYPE. GETTED {type(monumentObject)}")
@@ -79,7 +86,8 @@ class MonumentDecoder(json.JSONDecoder):
                 _description = monumentJSON['DESCRIPTION'],
                 _position_stupid = monumentJSON['POSSTUPID'],
                 _GPSPosition = monumentJSON['GPSPOS'],
-                _url = monumentJSON['URL']
+                _url = monumentJSON['URL'],
+                _img = monumentJSON['IMG'] if 'IMG' in monumentJSON.keys() else None,
             )
         else:
             raise json.JSONDecodeError('FAILED')
@@ -117,13 +125,15 @@ class MonumentsDatabase():
         else:
             self.CreateMonumentFile(newMonumentum)
 
-    def UpdateMonumentSaveByID(self, id: int, name: str=None, desc: str=None, _stupid_pos: str=None, gpsPos: tuple[float, float]=None):
-        oldMonument = self.ReadMonumentByID(id=id)
-        newMonument = Monument(id, name if name is not None else oldMonument.description,
-        desc if desc is not None else oldMonument.description,
-        _stupid_pos if _stupid_pos is not None else oldMonument.position_stupid,
-        gpsPos if gpsPos is not None else oldMonument.GPSPosition,
-        _url=oldMonument.getURL)
+    def UpdateMonumentSaveByID(self, id: int, name: str=None, desc: str=None, _stupid_pos: str=None, gpsPos: tuple[float, float]=None, url: str=None,img: str = None):
+        oldMonument: Monument = self.ReadMonumentByID(id=id)
+        newMonument = Monument(id, _name=name if name is not None else oldMonument.getName,
+        _description=desc if desc is not None else oldMonument.getDescription,
+        _position_stupid=_stupid_pos if _stupid_pos is not None else oldMonument.getStupidPosition,
+        _GPSPosition=gpsPos if gpsPos is not None else oldMonument.GPSPosition,
+        _url=url if url is not None else oldMonument.getURL,
+        _img=img if img is not None else oldMonument.getIMG)
+        
         self.UpdateMonumentSaveByIDByClass(id=id, newMonumentum=newMonument)
 
     def GetUniqueID(self) -> int:

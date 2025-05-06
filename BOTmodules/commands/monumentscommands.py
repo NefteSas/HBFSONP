@@ -13,10 +13,11 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMa
 import telegram
 from telegram.ext import ContextTypes, CallbackQueryHandler, ConversationHandler, CommandHandler, MessageHandler, filters
 
-from BOTmodules import database
+from BOTmodules import configuration, database
 from BOTmodules.commands.basebotcommand import BaseBotCommand
 from BOTmodules.commands.basedevcommand import BaseDevCommand
 from BOTmodules.commands.infocommand import InfoCommand
+from BOTmodules.telegram_interface import TelegramBotInterface
 
 INT_TO_SMILICK = ['1️⃣',
 '2️⃣',
@@ -152,18 +153,29 @@ class MonumentInfoCommand(BaseBotCommand):
         ]
         if (monument.getURL):
             keyboard.append([InlineKeyboardButton("Подробнее", url=monument.getURL)])
+        
+        if (monument.getIMG):
+            await TelegramBotInterface.sendPhoto(monument.getIMG, update, context)
             
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         message = update.message if update.message is not None else update.callback_query.message
-        
-        await message.reply_text(
-            f"""
-            📇: {monument.name}\n\n🔎: {monument.position_stupid}\n\nℹ️: {monument.description},
-            """,
-            reply_markup=reply_markup)
+        if (configuration.DEV_MODE):
+            await message.reply_text(
+                f"""
+                📇: {monument.name}\n\n🔎: {monument.position_stupid}\n\nℹ️: {monument.description}\n\n Идентефикатор: {monument.id}
+                """,
+                reply_markup=reply_markup)
+        else:
+            await message.reply_text(
+                f"""
+                📇: {monument.name}\n\n🔎: {monument.position_stupid}\n\nℹ️: {monument.description}
+                """,
+                reply_markup=reply_markup)
         
         await message.reply_location(monument.getGPSPosition[0], monument.getGPSPosition[1])
+        
+        
         
 
 NAME = 1
@@ -179,16 +191,20 @@ class CancelDialogCommand(BaseBotCommand):
         return ConversationHandler.END
 
 class EditMonumentInfo(BaseDevCommand):
-    START, NAME, DESCRITPTION = range(3)
+    START, NAME, DESCRITPTION,ADRESS,GPS,IMG,URL = range(7)
 
     def __init__(self, command="EM", has_args=True):
         self.conv_handler = ConversationHandler(
         entry_points=[
-            CallbackQueryHandler(callback=self._startEditing, pattern=r"monument:\d:\d")
+            CallbackQueryHandler(callback=self._startEditing, pattern=r"monument:\d+:\d+")
         ],
         states={
             EditMonumentInfo.NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, self._get_name)],
-            EditMonumentInfo.DESCRITPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, self._get_desc)]
+            EditMonumentInfo.DESCRITPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, self._get_desc)],
+            EditMonumentInfo.ADRESS: [MessageHandler(filters.TEXT & ~filters.COMMAND, self._get_adress)],
+            EditMonumentInfo.GPS: [MessageHandler(filters.LOCATION | filters.TEXT & ~filters.COMMAND, self._get_GPS)],
+            EditMonumentInfo.IMG: [MessageHandler(filters.TEXT & ~filters.COMMAND, self._get_IMG)],
+            EditMonumentInfo.URL: [MessageHandler(filters.TEXT & ~filters.COMMAND, self._get_URL)]
         },
         fallbacks=[CancelDialogCommand().GetHandler()]
     )
@@ -216,8 +232,11 @@ class EditMonumentInfo(BaseDevCommand):
             [InlineKeyboardButton("Имя", callback_data=f"monument:{args[0]}:1")],
             [InlineKeyboardButton("Описание", callback_data=f"monument:{args[0]}:2")],
             [InlineKeyboardButton("Геолокацию", callback_data=f"monument:{args[0]}:3")],
-            [InlineKeyboardButton("Адресс", callback_data=f"monument:{args[0]}:4")]
+            [InlineKeyboardButton("Адресс", callback_data=f"monument:{args[0]}:4")],
+            [InlineKeyboardButton("URL", callback_data=f"monument:{args[0]}:5")],
+            [InlineKeyboardButton("IMG", callback_data=f"monument:{args[0]}:6")]
         ]
+        
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         await update.message.reply_text(
@@ -227,17 +246,31 @@ class EditMonumentInfo(BaseDevCommand):
 
     # Обработчик нажатия кнопки
     async def _startEditing(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        print(f"Z")
         query = update.callback_query
         await query.answer()
         query_data = query.data.split(':')
         print(query_data[2]=="1")
         context.user_data["ID"] = query_data[1]
+        
         if (query_data[2]=="1"):
             await query.edit_message_text("Введите новое имя памятника:")
             return EditMonumentInfo.NAME
         elif (query_data[2]=="2"):
             await query.edit_message_text("Введите новое описание памятника:")
             return EditMonumentInfo.DESCRITPTION
+        elif (query_data[2]=="4"):
+            await query.edit_message_text("Введите новый адресс памятника:")
+            return EditMonumentInfo.ADRESS
+        elif (query_data[2]=="3"):
+            await query.edit_message_text("Введите новую геолокацию памятника:")
+            return EditMonumentInfo.GPS
+        elif (query_data[2]=="5"):
+            await query.edit_message_text("Введите новую ссылку памятника:")
+            return EditMonumentInfo.URL
+        elif (query_data[2]=="6"):
+            await query.edit_message_text("Введите новое изображение памятника:")
+            return EditMonumentInfo.IMG
         
     async def _get_name(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
@@ -250,6 +283,71 @@ class EditMonumentInfo(BaseDevCommand):
     async def _get_desc(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
             database.MonumentsDatabase().UpdateMonumentSaveByID(context.user_data["ID"], desc=update.message.text)
+        except FileExistsError:
+            await update.message.reply_text("❌ обновление не удалось")
+        await update.message.reply_text("✅ данные обновлены")
+        return await self._endConv(update, context)
+    
+    async def _get_adress(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        try:
+            database.MonumentsDatabase().UpdateMonumentSaveByID(context.user_data["ID"], _stupid_pos=update.message.text)
+        except FileExistsError:
+            await update.message.reply_text("❌ обновление не удалось")
+        await update.message.reply_text("✅ данные обновлены")
+        return await self._endConv(update, context)
+    
+    async def _get_GPS(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if (update.message.location is not None):
+            location = update.message.location
+            latitude = location.latitude
+            longitude = location.longitude
+        else:
+            location = update.message.text.split(" ")
+            if (len(location) != 2):
+                await update.message.reply_text("⚠️ Ошибка форматирования геопозиции. Повторите попыку. Например: 5 5. __ЧЕРЕЗ ПРОБЕЛ__")
+                return EditMonumentInfo.GPS
+            
+            latitude = location[0]
+            longitude = location[1]
+            
+        try:
+            database.MonumentsDatabase().UpdateMonumentSaveByID(context.user_data["ID"], gpsPos=(latitude, longitude))
+        except FileExistsError:
+            await update.message.reply_text("❌ обновление не удалось")
+            
+        await update.message.reply_text("✅ данные обновлены")
+        
+        return await self._endConv(update, context)
+    
+    async def _get_URL(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        URL = ''
+        if update.message.text != "-":
+            if not TelegramBotInterface.is_url(update.message.text):
+                await update.message.reply_text("⚠️ Ожидалась ссылка. Повторите. Если без него, пиши '-'")
+                return EditMonumentInfo.URL
+            URL = update.message.text
+        else:
+            URL = None
+        try:
+            database.MonumentsDatabase().UpdateMonumentSaveByID(context.user_data["ID"], url=URL)
+            
+        except FileExistsError:
+            await update.message.reply_text("❌ обновление не удалось")
+        await update.message.reply_text("✅ данные обновлены")
+        return await self._endConv(update, context)
+    
+    async def _get_IMG(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        URL = ''
+        if update.message.text != "-":
+            if not TelegramBotInterface.is_url(update.message.text):
+                await update.message.reply_text("⚠️ Ожидалась ссылка. Повторите. Если без него, пиши '-'")
+                return EditMonumentInfo.IMG
+            URL = update.message.text
+        else:
+            URL = None
+            
+        try:
+            database.MonumentsDatabase().UpdateMonumentSaveByID(context.user_data["ID"], img=URL)
         except FileExistsError:
             await update.message.reply_text("❌ обновление не удалось")
         await update.message.reply_text("✅ данные обновлены")

@@ -1,7 +1,8 @@
 from typing import override
 
 from datetime import datetime
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import PhotoSize, Update, InlineKeyboardMarkup, InlineKeyboardButton
+import telegram
 from telegram.ext import ContextTypes
 
 from BOTmodules.commands.basebotcommand import BaseBotCommand
@@ -16,6 +17,7 @@ class InfoCommand(BaseBotCommand):
 
     @override
     async def _callback(self, update: Update, callback: ContextTypes.DEFAULT_TYPE):
+        
         await update.message.reply_text(
             f"""
             Привет! {BOT_NAME} - информационный бот, цель которого поддережание памяти о Великой Отечественной Войне через предоставление удобной информации о памятниках!

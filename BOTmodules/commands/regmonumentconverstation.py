@@ -12,8 +12,9 @@ from BOTmodules import database
 from BOTmodules.commands import *
 from BOTmodules.commands.basedevcommand import BaseDevCommand
 from BOTmodules.commands.monumentscommands import CancelDialogCommand
+from BOTmodules.telegram_interface import TelegramBotInterface
 
-DESCRITPTION,GETSTUPIDPOIS,ASKPOS,GETGPSPOS,URL,CONFIRM = 1,2,3,4,5,6
+DESCRITPTION,GETSTUPIDPOIS,ASKPOS,GETGPSPOS,IMG,URL,CONFIRM = 1,2,3,4,5,6,7
 
 class RegMonumentCommand(BaseDevCommand):
     def __init__(self, command, has_args=True):
@@ -35,7 +36,8 @@ class RegMonumentConverstation():
             URL: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.__getURL)],
             ASKPOS: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.__AskMonumentGeoLocation)],
             GETGPSPOS: [MessageHandler(filters.LOCATION | filters.TEXT, self.__GetMonumentGeoLocation)],
-            CONFIRM: [MessageHandler(filters.LOCATION | filters.TEXT & ~filters.COMMAND, self.__confrimData)]
+            CONFIRM: [MessageHandler(filters.LOCATION | filters.TEXT & ~filters.COMMAND, self.__confrimData)],
+            IMG: [MessageHandler(filters.TEXT & ~filters.COMMAND, self.__getMonumentImg)]
         },
         fallbacks=[CancelDialogCommand().GetHandler()],  # Отмена
     ) 
@@ -47,11 +49,31 @@ class RegMonumentConverstation():
 
     async def __getMonumentLocation(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["description"] = update.message.text
-        await update.message.reply_text("Теперь URL адрес")
+        await update.message.reply_text("Теперь URL адрес изображения. Если без него, пиши '-'")
+        return IMG #IMG
+    
+    async def __getMonumentImg(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if update.message.text != "-":
+            if not TelegramBotInterface.is_url(update.message.text):
+                await update.message.reply_text("⚠️ Ожидалась ссылка. Повторите. Если без него, пиши '-'")
+                return IMG
+            context.user_data["IMG"] = update.message.text
+        else:
+            context.user_data["IMG"] = None
+            
+        await update.message.reply_text("Теперь URL адрес. Если без него, пиши '-'")
         return URL
     
     async def __getURL(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        context.user_data["URL"] = update.message.text
+        if update.message.text != "-":
+            if not TelegramBotInterface.is_url(update.message.text):
+                await update.message.reply_text("⚠️ Ожидалась ссылка. Повторите. Если без него, пиши '-'")
+                return URL
+            context.user_data["URL"] = update.message.text
+        else:
+            context.user_data["URL"] = None
+        
+        
         await update.message.reply_text("Теперь адрес")
         return ASKPOS
     
@@ -87,6 +109,7 @@ class RegMonumentConverstation():
             f"Название: {context.user_data['name']}\n"
             f"Описание: {context.user_data['description']}\n"
             f"URL: {context.user_data['URL']}\n"
+            f'IMG: {context.user_data['IMG']}\n'
             f"Адрес: {context.user_data['address']}\n"
             f"Координаты: Широта: {context.user_data["latitude"]}, Долгота: {context.user_data["longitude"]}",
             reply_markup=ReplyKeyboardMarkup(
@@ -101,7 +124,15 @@ class RegMonumentConverstation():
         answer = update.message.text
         if answer == "Да":
             DB = database.MonumentsDatabase()
-            DB.CreateMonumentFile(database.Monument(DB.GetUniqueID(), _name=context.user_data['name'], _description=context.user_data['description'], _position_stupid=context.user_data['address'],_GPSPosition=(context.user_data["latitude"], context.user_data["longitude"]), _url = context.user_data["URL"]))
+            DB.CreateMonumentFile(
+                database.Monument(DB.GetUniqueID(),
+                                  _name=context.user_data['name'],
+                                  _description=context.user_data['description'],
+                                  _position_stupid=context.user_data['address'],
+                                  _GPSPosition=(context.user_data["latitude"], context.user_data["longitude"]),
+                                  _url = context.user_data["URL"],
+                                  _img = context.user_data["IMG"])
+                )
 
             await update.message.reply_text(
                 "✅ Данные сохранены!",
