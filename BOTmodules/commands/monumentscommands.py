@@ -1,15 +1,8 @@
-from ast import Not
-from configparser import ConfigParser
-import dis
 import math
-import queue
 import random
-import re
-from turtle import distance, update
 from typing import override
 from geopy import distance
 
-from datetime import datetime
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, Update
 import telegram
 from telegram.ext import ContextTypes, CallbackQueryHandler, ConversationHandler, CommandHandler, MessageHandler, filters
@@ -17,7 +10,6 @@ from telegram.ext import ContextTypes, CallbackQueryHandler, ConversationHandler
 from BOTmodules import configuration, database
 from BOTmodules.commands.basebotcommand import BaseBotCommand
 from BOTmodules.commands.basedevcommand import BaseDevCommand
-from BOTmodules.commands.infocommand import InfoCommand
 from BOTmodules.telegram_interface import TelegramBotInterface
 
 INT_TO_SMILICK = ['1️⃣',
