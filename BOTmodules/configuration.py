@@ -2,12 +2,17 @@ import configparser
 import os
 
 CONFIG_FILE_PATH: str = "config/configuration.ini"
-
+WORK_WITH_VENV = False
 class ConfigurationOvermind:
     parser = configparser.ConfigParser()
 
     def __init__(self) -> None:
-        self.parser = self._read_or_create_configuration_file()
+        try:
+            self.parser = self._read_or_create_configuration_file()
+        except:
+            self.parser = {
+                {"TOKEN": os.environ["TOKEN"], "DEVS": os.environ["DEVS"], "DEVMODE": bool(os.environ["DEVMODE"])}
+            }
 
     def _create_configuration_file(self) -> configparser.ConfigParser:
         parser: configparser.ConfigParser = configparser.ConfigParser()
