@@ -154,18 +154,18 @@ class MonumentInfoCommand(BaseBotCommand):
         
         message = update.message if update.message is not None else update.callback_query.message
             
-        if (configuration.ConfigurationOvermind().getCurrentMode() == True):
-            await message.reply_text(
-                f"""
-                📇: {monument.name}\n\n🔎: {monument.position_stupid}\n\nℹ️: {monument.description}\n\n Идентефикатор: {monument.id}
-                """,
-                reply_markup=reply_markup)
-        else:
-            await message.reply_text(
-                f"""
-                📇: {monument.name}\n\n🔎: {monument.position_stupid}\n\nℹ️: {monument.description}
-                """,
-                reply_markup=reply_markup)
+        # if (configuration.ConfigurationOvermind().getCurrentMode() == True):
+        #     await message.reply_text(
+        #         f"""
+        #         📇: {monument.name}\n\n🔎: {monument.position_stupid}\n\nℹ️: {monument.description}\n\n Идентефикатор: {monument.id}
+        #         """,
+        #         reply_markup=reply_markup)
+        # else:
+        await message.reply_text(
+            f"""
+            📇: {monument.name}\n\n🔎: {monument.position_stupid}\n\nℹ️: {monument.description}
+            """,
+            reply_markup=reply_markup)
         
         await message.reply_location(monument.getGPSPosition[0], monument.getGPSPosition[1])     
 
