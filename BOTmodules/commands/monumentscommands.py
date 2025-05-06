@@ -1,4 +1,5 @@
 from ast import Not
+from configparser import ConfigParser
 import dis
 import math
 import queue
@@ -160,7 +161,8 @@ class MonumentInfoCommand(BaseBotCommand):
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         message = update.message if update.message is not None else update.callback_query.message
-        if (configuration.DEV_MODE):
+            
+        if (configuration.ConfigurationOvermind().getCurrentMode() == True):
             await message.reply_text(
                 f"""
                 📇: {monument.name}\n\n🔎: {monument.position_stupid}\n\nℹ️: {monument.description}\n\n Идентефикатор: {monument.id}
@@ -173,10 +175,7 @@ class MonumentInfoCommand(BaseBotCommand):
                 """,
                 reply_markup=reply_markup)
         
-        await message.reply_location(monument.getGPSPosition[0], monument.getGPSPosition[1])
-        
-        
-        
+        await message.reply_location(monument.getGPSPosition[0], monument.getGPSPosition[1])     
 
 NAME = 1
 
@@ -266,10 +265,10 @@ class EditMonumentInfo(BaseDevCommand):
             await query.edit_message_text("Введите новую геолокацию памятника:")
             return EditMonumentInfo.GPS
         elif (query_data[2]=="5"):
-            await query.edit_message_text("Введите новую ссылку памятника:")
+            await query.edit_message_text("Введите новую ссылку памятника. Если удалить, то пиши '-':")
             return EditMonumentInfo.URL
         elif (query_data[2]=="6"):
-            await query.edit_message_text("Введите новое изображение памятника:")
+            await query.edit_message_text("Введите новое изображение памятника. Если удалить, то пиши '-':")
             return EditMonumentInfo.IMG
         
     async def _get_name(self, update: Update, context: ContextTypes.DEFAULT_TYPE):

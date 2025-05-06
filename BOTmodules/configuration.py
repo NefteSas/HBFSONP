@@ -3,8 +3,6 @@ import os
 
 CONFIG_FILE_PATH: str = "config/configuration.ini"
 
-DEV_MODE = True
-
 class ConfigurationOvermind:
     parser = configparser.ConfigParser()
 
@@ -14,7 +12,7 @@ class ConfigurationOvermind:
     def _create_configuration_file(self) -> configparser.ConfigParser:
         parser: configparser.ConfigParser = configparser.ConfigParser()
 
-        parser["FUNDAMENTAL"] = {"TOKEN": "", "DEVS": ""}
+        parser["FUNDAMENTAL"] = {"TOKEN": "", "DEVS": "", "DEVMODE": False}
         
         with open(CONFIG_FILE_PATH, "w") as configfile:
             parser.write(configfile)
@@ -24,6 +22,10 @@ class ConfigurationOvermind:
         print("\n CREATED CONFIG FILE")
 
         return parser
+
+    def getCurrentMode(self) -> bool:
+        print(self.parser["FUNDAMENTAL"]["DEVMODE"])
+        return self.parser["FUNDAMENTAL"]["DEVMODE"]
 
     def _read_configuration_file(self) -> configparser.ConfigParser:
         parser: configparser.ConfigParser = configparser.ConfigParser()
