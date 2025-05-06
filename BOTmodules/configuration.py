@@ -11,7 +11,7 @@ class ConfigurationOvermind:
             self.parser = self._read_or_create_configuration_file()
         except:
             self.parser = {
-                {"TOKEN": os.environ["TOKEN"], "DEVS": os.environ["DEVS"], "DEVMODE": bool(os.environ["DEVMODE"])}
+                "FUNDAMENTAL": {"TOKEN": os.environ.get("TOKEN"), "DEVS": os.environ["DEVS"], "DEVMODE": bool(os.environ["DEVMODE"])}
             }
 
     def _create_configuration_file(self) -> configparser.ConfigParser:
@@ -51,7 +51,7 @@ class ConfigurationOvermind:
 
     def getBotToken(self) -> str:
         token: str = self.parser["FUNDAMENTAL"]["TOKEN"]
-
+        print(os.environ.get("api_key"))
         if token == "":
             raise Exception(f"TOKEN IS NULL. CHECK {CONFIG_FILE_PATH}")
         else:

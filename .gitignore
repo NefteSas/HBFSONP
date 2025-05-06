@@ -12,6 +12,7 @@ config/configuration.ini
 # Distribution / packaging
 .Python
 build/
+bot/
 develop-eggs/
 dist/
 downloads/
