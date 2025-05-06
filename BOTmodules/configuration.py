@@ -11,7 +11,7 @@ class ConfigurationOvermind:
             self.parser = self._read_or_create_configuration_file()
         except:
             self.parser = {
-                "FUNDAMENTAL": {"TOKEN": os.environ.get("TOKEN"), "DEVS": os.environ["DEVS"], "DEVMODE": bool(os.environ["DEVMODE"])}
+                "FUNDAMENTAL": {"TOKEN": os.environ.get("TOKEN"), "DEVS": os.environ.get("TOKEN"), "DEVMODE": bool(os.environ.get("TOKEN"))}
             }
 
     def _create_configuration_file(self) -> configparser.ConfigParser:
